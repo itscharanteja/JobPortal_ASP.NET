@@ -9,6 +9,7 @@ namespace JobPortalApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize] // Require authentication for all endpoints in this controller
     public class UsersController : ControllerBase
     {
         private readonly UserManager<ApplicationUser> _userManager;
@@ -23,7 +24,10 @@ namespace JobPortalApi.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Admin")]
         [ProducesResponseType(typeof(IEnumerable<UserInfo>), 200)]
+        [ProducesResponseType(401)]
+        [ProducesResponseType(403)]
         public async Task<ActionResult<IEnumerable<UserInfo>>> GetUsers()
         {
             try

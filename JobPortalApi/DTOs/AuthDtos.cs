@@ -47,6 +47,17 @@ namespace JobPortalApi.DTOs
         public UserInfo? User { get; set; }
     }
 
+    public class UpdateProfileRequest
+    {
+        [Required]
+        [StringLength(50)]
+        public string FirstName { get; set; } = string.Empty;
+
+        [Required]
+        [StringLength(50)]
+        public string LastName { get; set; } = string.Empty;
+    }
+
     public class UserInfo
     {
         public string Id { get; set; } = string.Empty;
