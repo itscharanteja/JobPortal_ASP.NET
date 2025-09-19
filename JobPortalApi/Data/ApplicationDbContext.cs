@@ -27,7 +27,7 @@ namespace JobPortalApi.Data
             builder.Entity<Job>()
                 .HasOne(j => j.Recruiter)
                 .WithMany(u => u.PostedJobs)
-                .HasForeignKey(j => j.RecruiterId)
+                .HasForeignKey(j => j.PostedById)
                 .OnDelete(DeleteBehavior.Restrict);
 
             builder.Entity<JobApplication>()

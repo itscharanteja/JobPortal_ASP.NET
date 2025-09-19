@@ -77,13 +77,15 @@ namespace JobPortalApi.Controllers
                 {
                     Title = "Test Developer Position",
                     Description = "This is a test job posting",
-                    Company = "Test Company",
+                    CompanyName = "Test Company",
                     Location = "Test Location",
-                    Type = "Full-Time",
+                    JobType = JobType.FullTime,
+                    ExperienceLevel = ExperienceLevel.MidLevel,
                     Salary = 750000,
-                    PostedDate = DateTime.UtcNow,
-                    IsActive = true,
-                    RecruiterId = recruiter.Id
+                    CreatedAt = DateTime.UtcNow,
+                    Status = JobStatus.Open,
+                    PostedById = recruiter.Id,
+                    RequiredSkills = new List<string> { "C#", "ASP.NET Core", "SQL" }
                 };
 
                 await _context.Jobs.AddAsync(job);
@@ -106,11 +108,11 @@ namespace JobPortalApi.Controllers
                 {
                     j.Id,
                     j.Title,
-                    j.Company,
+                    CompanyName = j.CompanyName,
                     j.Location,
                     j.Salary,
-                    RecruiterName = j.Recruiter.FirstName + " " + j.Recruiter.LastName,
-                    j.PostedDate
+                    RecruiterName = (j.Recruiter != null) ? j.Recruiter.FirstName + " " + j.Recruiter.LastName : string.Empty,
+                    CreatedAt = j.CreatedAt
                 })
                 .ToListAsync();
 

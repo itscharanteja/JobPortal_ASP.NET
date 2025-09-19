@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace JobPortalApi.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialMigration : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -168,21 +168,23 @@ namespace JobPortalApi.Migrations
                         .Annotation("Sqlite:Autoincrement", true),
                     Title = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
                     Description = table.Column<string>(type: "TEXT", nullable: false),
-                    Company = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
+                    CompanyName = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
                     Location = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
-                    Type = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
+                    JobType = table.Column<int>(type: "INTEGER", nullable: false),
+                    ExperienceLevel = table.Column<int>(type: "INTEGER", nullable: false),
                     Salary = table.Column<decimal>(type: "TEXT", precision: 18, scale: 2, nullable: false),
-                    PostedDate = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    ExpiryDate = table.Column<DateTime>(type: "TEXT", nullable: true),
-                    IsActive = table.Column<bool>(type: "INTEGER", nullable: false),
-                    RecruiterId = table.Column<string>(type: "TEXT", nullable: true)
+                    RequiredSkills = table.Column<string>(type: "TEXT", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    Status = table.Column<int>(type: "INTEGER", nullable: false),
+                    PostedById = table.Column<string>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Jobs", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Jobs_AspNetUsers_RecruiterId",
-                        column: x => x.RecruiterId,
+                        name: "FK_Jobs_AspNetUsers_PostedById",
+                        column: x => x.PostedById,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
@@ -267,9 +269,9 @@ namespace JobPortalApi.Migrations
                 column: "JobId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Jobs_RecruiterId",
+                name: "IX_Jobs_PostedById",
                 table: "Jobs",
-                column: "RecruiterId");
+                column: "PostedById");
         }
 
         /// <inheritdoc />

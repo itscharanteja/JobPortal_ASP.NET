@@ -29,7 +29,12 @@ namespace JobPortalApi.Controllers
         {
             try
             {
-                var user = await _userManager.FindByIdAsync(User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value);
+                var userId = User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value;
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return Unauthorized(new { success = false, message = "User ID not found" });
+                }
+                var user = await _userManager.FindByIdAsync(userId);
                 if (user == null)
                 {
                     return NotFound(new { success = false, message = "User not found" });
@@ -59,7 +64,12 @@ namespace JobPortalApi.Controllers
         {
             try
             {
-                var user = await _userManager.FindByIdAsync(User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value);
+                var userId = User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")?.Value;
+                if (string.IsNullOrEmpty(userId))
+                {
+                    return Unauthorized(new { success = false, message = "User ID not found" });
+                }
+                var user = await _userManager.FindByIdAsync(userId);
                 if (user == null)
                 {
                     return NotFound(new { success = false, message = "User not found" });

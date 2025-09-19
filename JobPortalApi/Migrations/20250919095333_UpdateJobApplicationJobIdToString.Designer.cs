@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace JobPortalApi.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250918101028_InitialMigration")]
-    partial class InitialMigration
+    [Migration("20250919095333_UpdateJobApplicationJobIdToString")]
+    partial class UpdateJobApplicationJobIdToString
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -100,23 +100,25 @@ namespace JobPortalApi.Migrations
 
             modelBuilder.Entity("JobPortalApi.Models.Job", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                    b.Property<string>("Id")
+                        .HasColumnType("TEXT");
 
-                    b.Property<string>("Company")
+                    b.Property<string>("CompanyName")
                         .IsRequired()
                         .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime?>("ExpiryDate")
-                        .HasColumnType("TEXT");
+                    b.Property<int>("ExperienceLevel")
+                        .HasColumnType("INTEGER");
 
-                    b.Property<bool>("IsActive")
+                    b.Property<int>("JobType")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Location")
@@ -124,29 +126,32 @@ namespace JobPortalApi.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("PostedDate")
+                    b.Property<string>("PostedById")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("RecruiterId")
+                    b.PrimitiveCollection<string>("RequiredSkills")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<decimal>("Salary")
                         .HasPrecision(18, 2)
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("Status")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Type")
-                        .IsRequired()
-                        .HasMaxLength(50)
+                    b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("RecruiterId");
+                    b.HasIndex("PostedById");
 
                     b.ToTable("Jobs");
                 });
@@ -167,8 +172,9 @@ namespace JobPortalApi.Migrations
                     b.Property<string>("CoverLetter")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("JobId")
-                        .HasColumnType("INTEGER");
+                    b.Property<string>("JobId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Notes")
                         .HasColumnType("TEXT");
@@ -320,8 +326,9 @@ namespace JobPortalApi.Migrations
                 {
                     b.HasOne("JobPortalApi.Models.ApplicationUser", "Recruiter")
                         .WithMany("PostedJobs")
-                        .HasForeignKey("RecruiterId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .HasForeignKey("PostedById")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.Navigation("Recruiter");
                 });

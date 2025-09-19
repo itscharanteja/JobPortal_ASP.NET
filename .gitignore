@@ -103,3 +103,6 @@ appsettings.Development.json
 *.exe
 *.o
 *.so
+
+
+JobPortalApi/ignorefile_credentials.txt
