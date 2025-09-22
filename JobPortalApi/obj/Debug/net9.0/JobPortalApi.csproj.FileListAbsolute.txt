@@ -168,3 +168,9 @@
 /Users/charan/Documents/Projects/JobPortal/JobPortalApi/bin/Debug/net9.0/Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
 /Users/charan/Documents/Projects/JobPortal/JobPortalApi/bin/Debug/net9.0/Microsoft.IdentityModel.Tokens.dll
 /Users/charan/Documents/Projects/JobPortal/JobPortalApi/bin/Debug/net9.0/System.IdentityModel.Tokens.Jwt.dll
+/Users/charan/Documents/Projects/JobPortal/JobPortalApi/bin/Debug/net9.0/Azure.Core.dll
+/Users/charan/Documents/Projects/JobPortal/JobPortalApi/bin/Debug/net9.0/Azure.Storage.Blobs.dll
+/Users/charan/Documents/Projects/JobPortal/JobPortalApi/bin/Debug/net9.0/Azure.Storage.Common.dll
+/Users/charan/Documents/Projects/JobPortal/JobPortalApi/bin/Debug/net9.0/System.ClientModel.dll
+/Users/charan/Documents/Projects/JobPortal/JobPortalApi/bin/Debug/net9.0/System.IO.Hashing.dll
+/Users/charan/Documents/Projects/JobPortal/JobPortalApi/bin/Debug/net9.0/System.Memory.Data.dll

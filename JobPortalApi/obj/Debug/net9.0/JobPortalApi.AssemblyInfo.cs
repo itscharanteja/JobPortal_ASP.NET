@@ -10,10 +10,11 @@
 using System;
 using System.Reflection;
 
+[assembly: Microsoft.Extensions.Configuration.UserSecrets.UserSecretsIdAttribute("e9f89928-aa46-4bd1-9cdc-68110554d83f")]
 [assembly: System.Reflection.AssemblyCompanyAttribute("JobPortalApi")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c6987fad6d7575a2d41a068d24b450697b80fcb9")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+6515177d7fd2c48bd236828e91b0e0a5f7906ed1")]
 [assembly: System.Reflection.AssemblyProductAttribute("JobPortalApi")]
 [assembly: System.Reflection.AssemblyTitleAttribute("JobPortalApi")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

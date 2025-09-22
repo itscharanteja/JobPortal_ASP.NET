@@ -48,6 +48,14 @@ yarn-error.log*
 package-lock.json
 yarn.lock
 
+# Sensitive Configuration
+appsettings.*.json
+!appsettings.json
+!appsettings.Example.json
+.env
+.env.*
+!.env.example
+
 # React specific
 /job-portal-client/node_modules
 /job-portal-client/.pnp
@@ -106,3 +114,5 @@ appsettings.Development.json
 
 
 JobPortalApi/ignorefile_credentials.txt
+JobPortalApi/sample_resume.pdf
+JobPortalApi/test_resume.pdf
