@@ -43,8 +43,8 @@ namespace JobPortalApi.Services
 
         public Task<string> GetFileUrlWithSasToken(string blobPath, string containerName)
         {
-            // For local storage, we'll return a URL to access the file through a local endpoint
-            var baseUrl = "api/files"; // You'll need to implement this endpoint
+            // For local storage, we'll return a full URL to access the file through a local endpoint
+            var baseUrl = "http://localhost:5000/api/files"; // Full URL for browser access
             return Task.FromResult($"{baseUrl}/{containerName}/{blobPath}");
         }
     }

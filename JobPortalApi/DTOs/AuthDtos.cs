@@ -66,6 +66,8 @@ namespace JobPortalApi.DTOs
         public string LastName { get; set; } = string.Empty;
         public UserType UserType { get; set; }
         public List<string> Roles { get; set; } = new List<string>();
+        public bool HasResume { get; set; }
+        public string? ResumeFileName { get; set; }
 
         public static UserInfo FromApplicationUser(ApplicationUser user, IList<string> roles)
         {
@@ -76,7 +78,9 @@ namespace JobPortalApi.DTOs
                 FirstName = user.FirstName,
                 LastName = user.LastName,
                 UserType = user.UserType,
-                Roles = roles.ToList()
+                Roles = roles.ToList(),
+                HasResume = !string.IsNullOrEmpty(user.Resume),
+                ResumeFileName = user.Resume
             };
         }
     }

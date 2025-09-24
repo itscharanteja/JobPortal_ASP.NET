@@ -91,6 +91,61 @@ namespace JobPortalApi.Controllers
             }
         }
 
+        [HttpGet("resume")]
+        [Authorize(Roles = "JobSeeker")]
+        public async Task<IActionResult> GetResumeStatus()
+        {
+            try
+            {
+                var user = await _userManager.GetUserAsync(User);
+                if (user == null)
+                    return NotFound("User not found");
+
+                return Ok(new { 
+                    hasResume = !string.IsNullOrEmpty(user.Resume),
+                    resumeFileName = user.Resume
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting resume status");
+                return StatusCode(500, "An error occurred while getting resume status");
+            }
+        }
+
+                [HttpGet("resume/download")]
+        [ProducesResponseType(typeof(object), 200)]
+        [ProducesResponseType(404)]
+        public async Task<ActionResult> DownloadResume()
+        {
+            try
+            {
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (userId == null) return Unauthorized();
+                
+                var user = await _userManager.FindByIdAsync(userId);
+
+                if (user?.Resume == null)
+                    return NotFound("Resume not found");
+
+                // Generate a temporary download token (valid for 5 minutes)
+                var downloadToken = Guid.NewGuid().ToString();
+                var tokenExpiry = DateTime.UtcNow.AddMinutes(5);
+                
+                // Store token in cache/memory (for simplicity, using static dictionary - in production use Redis/database)
+                DownloadTokenCache.AddToken(downloadToken, user.Resume, tokenExpiry);
+                
+                var downloadUrl = $"http://localhost:5000/api/files/download/{downloadToken}";
+                
+                return Ok(new { downloadUrl, fileName = Path.GetFileName(user.Resume) });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error downloading resume");
+                return StatusCode(500, "An error occurred while downloading the resume");
+            }
+        }
+
         [HttpPost("{jobId}/apply")]
         [ProducesResponseType(typeof(JobApplicationResponse), 200)]
         [ProducesResponseType(400)]

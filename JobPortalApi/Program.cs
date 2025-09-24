@@ -24,6 +24,7 @@ builder.Services.AddCors(options =>
 });
 
 // Add services to the container.
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddControllers(options =>
 {
     options.SuppressImplicitRequiredAttributeForNonNullableReferenceTypes = true;
@@ -55,16 +56,21 @@ else
 }
 
 // Add File Storage Service
-if (builder.Environment.IsEnvironment("Test"))
+if (builder.Environment.IsEnvironment("Test") || builder.Environment.IsDevelopment())
 {
-    // Use local file storage for tests
+    // Use local file storage for tests and development
     builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
 }
 else
 {
-    // Add Azure Blob Storage for non-test environments
-    builder.Services.AddSingleton(x => new BlobServiceClient(
-        builder.Configuration["AzureStorage:ConnectionString"]));
+    // Add Azure Blob Storage for production environments
+    var connectionString = builder.Configuration["AzureStorage:ConnectionString"];
+    if (string.IsNullOrEmpty(connectionString))
+    {
+        throw new InvalidOperationException("Azure Storage connection string is required for production environment.");
+    }
+    
+    builder.Services.AddSingleton(x => new BlobServiceClient(connectionString));
     builder.Services.AddScoped<IFileStorageService>(provider => 
         new AzureBlobStorageService(
             provider.GetRequiredService<BlobServiceClient>(),
