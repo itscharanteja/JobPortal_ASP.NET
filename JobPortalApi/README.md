@@ -62,6 +62,27 @@ The test suite is organized into several key areas, each focusing on specific fu
   - Access control verification
   - Operation authorization
 
+## Project Setup
+
+### Directory Structure
+
+The project requires certain directories for file uploads that are not tracked in git:
+
+```
+JobPortalApi/
+├── uploads/
+│   └── resumes/     # For storing uploaded resume files
+```
+
+These directories are excluded from git (via .gitignore) but must be created in the deployment environment. The application will attempt to create these directories if they don't exist, but it's recommended to create them manually during deployment.
+
+### File Upload Configuration
+
+- Upload directories are not committed to git to avoid repository bloat
+- Sensitive user data (resumes) should not be tracked in version control
+- The application expects these directories to exist for proper functionality
+- Ensure proper permissions are set on these directories in production
+
 ## Test Infrastructure
 
 ### Base Test Configuration (`TestBase.cs`)

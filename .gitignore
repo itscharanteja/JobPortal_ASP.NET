@@ -1,6 +1,10 @@
 # macOS
 .DS_Store
 
+# Uploaded files
+**/uploads/
+**/uploads/resumes/
+
 # .NET Core
 *.swp
 *.*~
