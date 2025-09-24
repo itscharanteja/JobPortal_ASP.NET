@@ -70,6 +70,19 @@ namespace JobPortalApi.DTOs
         }
     }
 
+    public class UpdateJobRequest
+    {
+        public string? Title { get; set; }
+        public string? Description { get; set; }
+        public string? CompanyName { get; set; }
+        public string? Location { get; set; }
+        public decimal? Salary { get; set; }
+        public JobType? JobType { get; set; }
+        public ExperienceLevel? ExperienceLevel { get; set; }
+        public List<string>? RequiredSkills { get; set; }
+        public JobStatus? Status { get; set; }
+    }
+
     public class UpdateJobStatusRequest
     {
         [Required]

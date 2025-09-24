@@ -36,18 +36,42 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // Add Database Context
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services.AddDbContext<ApplicationDbContext>(options =>
+        options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+}
+else if (builder.Environment.IsEnvironment("Test"))
+{
+    // Test environment will be configured by test setup
+    // Don't add any database context here to avoid conflicts
+}
+else
+{
+    // Use a different database provider for production, e.g., SQL Server or PostgreSQL
+    // For now, let's assume SQLite for simplicity or use InMemory for testing if needed
+    builder.Services.AddDbContext<ApplicationDbContext>(options =>
+        options.UseInMemoryDatabase("JobPortalDb")); // Example for non-development environments
+}
 
-// Add Azure Blob Storage
-builder.Services.AddSingleton(x => new BlobServiceClient(
-    builder.Configuration["AzureStorage:ConnectionString"]));
-builder.Services.AddScoped<IFileStorageService>(provider => 
-    new AzureBlobStorageService(
-        provider.GetRequiredService<BlobServiceClient>(),
-        provider.GetRequiredService<IConfiguration>(),
-        provider.GetRequiredService<ILogger<AzureBlobStorageService>>()
-    ));
+// Add File Storage Service
+if (builder.Environment.IsEnvironment("Test"))
+{
+    // Use local file storage for tests
+    builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
+}
+else
+{
+    // Add Azure Blob Storage for non-test environments
+    builder.Services.AddSingleton(x => new BlobServiceClient(
+        builder.Configuration["AzureStorage:ConnectionString"]));
+    builder.Services.AddScoped<IFileStorageService>(provider => 
+        new AzureBlobStorageService(
+            provider.GetRequiredService<BlobServiceClient>(),
+            provider.GetRequiredService<IConfiguration>(),
+            provider.GetRequiredService<ILogger<AzureBlobStorageService>>()
+        ));
+}
 
 // Add Identity with Role support
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options => {
@@ -101,18 +125,6 @@ app.UseCors();
 app.UseHttpsRedirection();
 
 app.UseAuthentication();
-app.UseAuthorization();
-
-app.MapControllers();
-
-app.Run();
-
-// Authentication & Authorization
-app.UseAuthentication();
-app.UseAuthorization();
-
-// Enable endpoint routing
-app.MapControllers();
 app.UseAuthorization();
 
 app.MapControllers();
