@@ -50,7 +50,7 @@ const Register = () => {
     setLoading(true);
 
     try {
-      const { confirmPassword, ...registerData } = formData;
+      const { _confirmPassword, ...registerData } = formData;
       await register(registerData);
       navigate("/dashboard");
     } catch (err) {

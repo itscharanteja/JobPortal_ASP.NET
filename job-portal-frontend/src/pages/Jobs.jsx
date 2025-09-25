@@ -14,6 +14,7 @@ import {
 import { FilterList, Close } from "@mui/icons-material";
 import JobFilters from "../components/jobs/JobFilters";
 import JobList from "../components/jobs/JobList";
+import AdminJobList from "../components/jobs/AdminJobList";
 import { useAuth } from "../hooks/useAuth";
 
 const Jobs = () => {
@@ -34,7 +35,18 @@ const Jobs = () => {
   }, []);
 
   // Memoize filters to prevent unnecessary re-renders
-  const memoizedFilters = useMemo(() => filters, [JSON.stringify(filters)]);
+  const memoizedFilters = useMemo(() => filters, [filters]);
+
+  // Helper function to check if user is admin
+  const isAdmin = useCallback((user) => {
+    if (!user) return false;
+    const roles = user.roles || user.Roles || [];
+    return (
+      roles.includes("Admin") || user.role === "Admin" || user.Role === "Admin"
+    );
+  }, []);
+
+  const userIsAdmin = isAdmin(user);
 
   const handleJobApply = useCallback((jobId) => {
     console.log("Applied to job:", jobId);
@@ -68,41 +80,49 @@ const Jobs = () => {
       {/* Page Header */}
       <Box sx={{ mb: 4 }}>
         <Typography variant="h3" component="h1" gutterBottom>
-          Find Your Dream Job
+          {userIsAdmin ? "Manage Your Job Postings" : "Find Your Dream Job"}
         </Typography>
         <Typography variant="h6" color="text.secondary">
-          Discover opportunities that match your skills and career goals
+          {userIsAdmin
+            ? "View and manage your job postings and applications"
+            : "Discover opportunities that match your skills and career goals"}
         </Typography>
       </Box>
 
       {/* Role-based messaging */}
-      {user?.role === "Recruiter" && (
+      {userIsAdmin && (
         <Alert severity="info" sx={{ mb: 3 }}>
-          You're viewing as a Recruiter. Switch to Job Seeker view to apply to
-          jobs.
+          You're viewing as an Administrator. Here are your posted jobs and
+          their applications.
         </Alert>
       )}
 
-      <Box sx={{ display: "flex", gap: 3 }}>
-        {/* Desktop Filters Sidebar */}
-        {!isMobile && (
-          <Box sx={{ width: 350, flexShrink: 0 }}>
-            <FiltersComponent />
+      {userIsAdmin ? (
+        // Admin view - show posted jobs with applicant management
+        <AdminJobList />
+      ) : (
+        // Job seeker view - show job search with filters
+        <Box sx={{ display: "flex", gap: 3 }}>
+          {/* Desktop Filters Sidebar */}
+          {!isMobile && (
+            <Box sx={{ width: 350, flexShrink: 0 }}>
+              <FiltersComponent />
+            </Box>
+          )}
+
+          {/* Main Content */}
+          <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+            <JobList
+              filters={memoizedFilters}
+              onJobApply={handleJobApply}
+              onJobViewDetails={handleJobViewDetails}
+            />
           </Box>
-        )}
-
-        {/* Main Content */}
-        <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-          <JobList
-            filters={memoizedFilters}
-            onJobApply={handleJobApply}
-            onJobViewDetails={handleJobViewDetails}
-          />
         </Box>
-      </Box>
+      )}
 
-      {/* Mobile Filters */}
-      {isMobile && (
+      {/* Mobile Filters - Only for job seekers */}
+      {isMobile && !userIsAdmin && (
         <>
           {/* Mobile Filter Button */}
           <Fab

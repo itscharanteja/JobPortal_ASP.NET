@@ -7,13 +7,14 @@ import {
 } from "react-router-dom";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
-import { AuthProvider } from "./hooks/useAuth";
+import { AuthProvider } from "./hooks/AuthProvider";
 import ProtectedRoute from "./components/common/ProtectedRoute";
 import Login from "./components/auth/Login";
 import Register from "./components/auth/Register";
 import Dashboard from "./components/dashboard/Dashboard";
 import Jobs from "./pages/Jobs";
 import Profile from "./pages/Profile";
+import JobSeekers from "./pages/JobSeekers";
 import Navbar from "./components/common/Navbar";
 
 const theme = createTheme({
@@ -58,6 +59,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Profile />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/jobseekers"
+              element={
+                <ProtectedRoute>
+                  <JobSeekers />
                 </ProtectedRoute>
               }
             />

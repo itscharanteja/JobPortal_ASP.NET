@@ -7,6 +7,15 @@ const Navbar = () => {
   const { user, logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
+  // Helper function to check if user is admin
+  const isAdmin = (user) => {
+    if (!user) return false;
+    const roles = user.roles || user.Roles || [];
+    return (
+      roles.includes("Admin") || user.role === "Admin" || user.Role === "Admin"
+    );
+  };
+
   const handleLogout = () => {
     logout();
     navigate("/login");
@@ -30,6 +39,12 @@ const Navbar = () => {
             <Button color="inherit" onClick={() => navigate("/jobs")}>
               Jobs
             </Button>
+            {/* Admin-only navigation */}
+            {isAdmin(user) && (
+              <Button color="inherit" onClick={() => navigate("/jobseekers")}>
+                Job Seekers
+              </Button>
+            )}
             <Button color="inherit" onClick={() => navigate("/profile")}>
               Profile
             </Button>

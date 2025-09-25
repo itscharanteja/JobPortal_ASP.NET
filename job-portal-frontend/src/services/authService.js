@@ -54,4 +54,29 @@ export const authService = {
   getToken() {
     return localStorage.getItem("token");
   },
+
+  // Get user profile
+  async getProfile() {
+    try {
+      const response = await api.get("/profile/me");
+      return response.data.profile;
+    } catch (error) {
+      throw error.response?.data || { message: "Failed to get profile" };
+    }
+  },
+
+  // Update user profile
+  async updateProfile(profileData) {
+    try {
+      const response = await api.put("/profile/me", profileData);
+      const updatedUser = response.data.profile;
+
+      // Update user in localStorage
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+
+      return updatedUser;
+    } catch (error) {
+      throw error.response?.data || { message: "Failed to update profile" };
+    }
+  },
 };

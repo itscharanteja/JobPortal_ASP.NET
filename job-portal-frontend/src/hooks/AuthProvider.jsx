@@ -1,15 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { authService } from "../services/authService";
-
-const AuthContext = createContext();
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-  return context;
-};
+import { AuthContext } from "../contexts/AuthContext";
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -25,23 +16,15 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (email, password) => {
-    try {
-      const { user: userData } = await authService.login(email, password);
-      setUser(userData);
-      return userData;
-    } catch (error) {
-      throw error;
-    }
+    const { user: userData } = await authService.login(email, password);
+    setUser(userData);
+    return userData;
   };
 
   const register = async (userData) => {
-    try {
-      const { user: newUser } = await authService.register(userData);
-      setUser(newUser);
-      return newUser;
-    } catch (error) {
-      throw error;
-    }
+    const { user: newUser } = await authService.register(userData);
+    setUser(newUser);
+    return newUser;
   };
 
   const logout = () => {
@@ -49,11 +32,18 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
+  const updateProfile = async (profileData) => {
+    const updatedUser = await authService.updateProfile(profileData);
+    setUser(updatedUser);
+    return updatedUser;
+  };
+
   const value = {
     user,
     login,
     register,
     logout,
+    updateProfile,
     loading,
     isAuthenticated: !!user,
   };

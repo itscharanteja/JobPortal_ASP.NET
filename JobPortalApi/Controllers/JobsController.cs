@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using JobPortalApi.Data;
 using JobPortalApi.Models;
@@ -143,6 +144,221 @@ namespace JobPortalApi.Controllers
             {
                 _logger.LogError(ex, "Error retrieving jobs list");
                 return StatusCode(500, new { success = false, message = "An error occurred while retrieving jobs" });
+            }
+        }
+
+        [HttpGet("{id}")]
+        [ProducesResponseType(typeof(JobResponse), 200)]
+        [ProducesResponseType(404)]
+        public async Task<ActionResult<JobResponse>> GetJobById(int id)
+        {
+            try
+            {
+                var job = await _db.Jobs
+                    .Include(j => j.Recruiter)
+                    .FirstOrDefaultAsync(j => j.Id == id);
+
+                if (job == null)
+                {
+                    return NotFound(new { success = false, message = "Job not found" });
+                }
+
+                return Ok(new { success = true, data = JobResponse.FromJob(job) });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving job with ID {JobId}", id);
+                return StatusCode(500, new { success = false, message = "An error occurred while retrieving the job" });
+            }
+        }
+
+        [HttpPost]
+        [Authorize]
+        [ProducesResponseType(typeof(JobResponse), 201)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(401)]
+        public async Task<ActionResult<JobResponse>> CreateJob([FromBody] CreateJobRequest request)
+        {
+            try
+            {
+                // Check model validation
+                if (!ModelState.IsValid)
+                {
+                    var errors = ModelState
+                        .Where(x => x.Value?.Errors.Count > 0)
+                        .Select(x => new { 
+                            Field = x.Key, 
+                            Errors = x.Value?.Errors.Select(e => e.ErrorMessage) ?? new List<string>()
+                        });
+                    
+                    return BadRequest(new { 
+                        success = false, 
+                        message = "Validation failed", 
+                        errors = errors 
+                    });
+                }
+
+                // Get the current user ID from the JWT token
+                var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+                if (userIdClaim == null)
+                {
+                    return Unauthorized(new { success = false, message = "User not authenticated" });
+                }
+
+                var job = new Job
+                {
+                    Title = request.Title,
+                    Description = request.Description,
+                    CompanyName = request.CompanyName,  
+                    Location = request.Location,
+                    Salary = request.Salary,
+                    JobType = request.JobType,
+                    ExperienceLevel = request.ExperienceLevel,
+                    RequiredSkills = request.RequiredSkills,
+                    PostedById = userIdClaim.Value,
+                    Status = JobStatus.Open,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                _db.Jobs.Add(job);
+                await _db.SaveChangesAsync();
+
+                // Reload the job with recruiter information
+                var createdJob = await _db.Jobs
+                    .Include(j => j.Recruiter)
+                    .FirstOrDefaultAsync(j => j.Id == job.Id);
+
+                return CreatedAtAction(
+                    nameof(GetJobById),
+                    new { id = job.Id },
+                    new { success = true, data = JobResponse.FromJob(createdJob!) }
+                );
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating job");
+                return StatusCode(500, new { success = false, message = "An error occurred while creating the job" });
+            }
+        }
+
+        [HttpPut("{id}")]
+        [Authorize]
+        [ProducesResponseType(typeof(JobResponse), 200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(401)]
+        [ProducesResponseType(404)]
+        public async Task<ActionResult<JobResponse>> UpdateJob(int id, [FromBody] UpdateJobRequest request)
+        {
+            try
+            {
+                // Get the current user ID from the JWT token
+                var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+                if (userIdClaim == null)
+                {
+                    return Unauthorized(new { success = false, message = "User not authenticated" });
+                }
+
+                var job = await _db.Jobs.FirstOrDefaultAsync(j => j.Id == id);
+                if (job == null)
+                {
+                    return NotFound(new { success = false, message = "Job not found" });
+                }
+
+                // Check if the user is the owner of the job or an admin
+                var isOwner = job.PostedById == userIdClaim.Value;
+                var isAdmin = User.IsInRole("Admin");
+
+                if (!isOwner && !isAdmin)
+                {
+                    return Forbid();
+                }
+
+                // Update job properties (only update non-null values)
+                if (!string.IsNullOrWhiteSpace(request.Title))
+                    job.Title = request.Title;
+                
+                if (!string.IsNullOrWhiteSpace(request.Description))
+                    job.Description = request.Description;
+                
+                if (!string.IsNullOrWhiteSpace(request.CompanyName))
+                    job.CompanyName = request.CompanyName;
+                
+                if (!string.IsNullOrWhiteSpace(request.Location))
+                    job.Location = request.Location;
+                
+                if (request.Salary.HasValue)
+                    job.Salary = request.Salary.Value;
+                
+                if (request.JobType.HasValue)
+                    job.JobType = request.JobType.Value;
+                
+                if (request.ExperienceLevel.HasValue)
+                    job.ExperienceLevel = request.ExperienceLevel.Value;
+                
+                if (request.RequiredSkills != null)
+                    job.RequiredSkills = request.RequiredSkills;
+                
+                if (request.Status.HasValue)
+                    job.Status = request.Status.Value;
+
+                job.UpdatedAt = DateTime.UtcNow;
+
+                await _db.SaveChangesAsync();
+
+                // Reload the job with recruiter information
+                var updatedJob = await _db.Jobs
+                    .Include(j => j.Recruiter)
+                    .FirstOrDefaultAsync(j => j.Id == job.Id);
+
+                return Ok(new { success = true, data = JobResponse.FromJob(updatedJob!) });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating job with ID {JobId}", id);
+                return StatusCode(500, new { success = false, message = "An error occurred while updating the job" });
+            }
+        }
+
+        [HttpDelete("{id}")]
+        [Authorize]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(401)]
+        [ProducesResponseType(404)]
+        public async Task<ActionResult> DeleteJob(int id)
+        {
+            try
+            {
+                // Get the current user ID from the JWT token
+                var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+                if (userIdClaim == null)
+                {
+                    return Unauthorized(new { success = false, message = "User not authenticated" });
+                }
+
+                var job = await _db.Jobs.FirstOrDefaultAsync(j => j.Id == id);
+                if (job == null)
+                {
+                    return NotFound(new { success = false, message = "Job not found" });
+                }
+
+                // Check if the user is the owner of the job or an admin
+                var isOwner = job.PostedById == userIdClaim.Value;
+                var isAdmin = User.IsInRole("Admin");
+
+                if (!isOwner && !isAdmin)
+                {
+                    return Forbid();
+                }
+
+                _db.Jobs.Remove(job);
+                await _db.SaveChangesAsync();
+
+                return Ok(new { success = true, message = "Job deleted successfully" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting job with ID {JobId}", id);
+                return StatusCode(500, new { success = false, message = "An error occurred while deleting the job" });
             }
         }
     }
