@@ -120,3 +120,4 @@ appsettings.Development.json
 JobPortalApi/ignorefile_credentials.txt
 JobPortalApi/sample_resume.pdf
 JobPortalApi/test_resume.pdf
+test-resume.txt

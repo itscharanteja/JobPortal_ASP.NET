@@ -23,8 +23,10 @@ import {
   Close,
 } from "@mui/icons-material";
 import { jobsService } from "../../services/jobsService";
+import { useAuth } from "../../hooks/useAuth";
 
 const ResumeManager = ({ onResumeStatusChange }) => {
+  const { refreshResumeStatus } = useAuth();
   const [resumeStatus, setResumeStatus] = useState(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -88,7 +90,8 @@ const ResumeManager = ({ onResumeStatusChange }) => {
       setSuccess("Resume uploaded successfully!");
       setUploadDialogOpen(false);
       setSelectedFile(null);
-      await fetchResumeStatus(); // Refresh status
+      await fetchResumeStatus(); // Refresh local status
+      await refreshResumeStatus(); // Refresh global status
     } catch (err) {
       console.error("Error uploading resume:", err);
       setError(err.message || "Failed to upload resume");

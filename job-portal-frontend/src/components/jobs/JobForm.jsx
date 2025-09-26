@@ -160,6 +160,7 @@ const JobForm = ({ open, onClose, onSuccess, job = null, isEdit = false }) => {
           <Grid container spacing={2}>
             <Grid item xs={12}>
               <TextField
+                id="job-title"
                 name="title"
                 label="Job Title"
                 value={formData.title}
@@ -172,6 +173,7 @@ const JobForm = ({ open, onClose, onSuccess, job = null, isEdit = false }) => {
 
             <Grid item xs={12} sm={6}>
               <TextField
+                id="company-name"
                 name="companyName"
                 label="Company Name"
                 value={formData.companyName}
@@ -184,6 +186,7 @@ const JobForm = ({ open, onClose, onSuccess, job = null, isEdit = false }) => {
 
             <Grid item xs={12} sm={6}>
               <TextField
+                id="job-location-form"
                 name="location"
                 label="Location"
                 value={formData.location}
@@ -196,6 +199,7 @@ const JobForm = ({ open, onClose, onSuccess, job = null, isEdit = false }) => {
 
             <Grid item xs={12} sm={6}>
               <TextField
+                id="job-salary"
                 name="salary"
                 label="Salary"
                 type="number"
@@ -212,8 +216,10 @@ const JobForm = ({ open, onClose, onSuccess, job = null, isEdit = false }) => {
 
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth required disabled={loading}>
-                <InputLabel>Job Type</InputLabel>
+                <InputLabel id="job-type-form-label">Job Type</InputLabel>
                 <Select
+                  id="job-type-form-select"
+                  labelId="job-type-form-label"
                   name="jobType"
                   value={formData.jobType}
                   onChange={handleChange}
@@ -229,8 +235,12 @@ const JobForm = ({ open, onClose, onSuccess, job = null, isEdit = false }) => {
 
             <Grid item xs={12}>
               <FormControl fullWidth required disabled={loading}>
-                <InputLabel>Experience Level</InputLabel>
+                <InputLabel id="experience-level-form-label">
+                  Experience Level
+                </InputLabel>
                 <Select
+                  id="experience-level-form-select"
+                  labelId="experience-level-form-label"
                   name="experienceLevel"
                   value={formData.experienceLevel}
                   onChange={handleChange}
@@ -246,6 +256,7 @@ const JobForm = ({ open, onClose, onSuccess, job = null, isEdit = false }) => {
 
             <Grid item xs={12}>
               <TextField
+                id="job-description"
                 name="description"
                 label="Job Description"
                 value={formData.description}
@@ -261,6 +272,7 @@ const JobForm = ({ open, onClose, onSuccess, job = null, isEdit = false }) => {
 
             <Grid item xs={12}>
               <TextField
+                id="required-skills"
                 name="requiredSkills"
                 label="Required Skills (comma-separated)"
                 value={

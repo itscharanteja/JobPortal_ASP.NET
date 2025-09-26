@@ -85,6 +85,7 @@ const ProfileEditForm = ({ user, onSave, onCancel, loading = false }) => {
       )}
 
       <TextField
+        id="first-name"
         fullWidth
         label="First Name"
         name="firstName"
@@ -99,6 +100,7 @@ const ProfileEditForm = ({ user, onSave, onCancel, loading = false }) => {
       />
 
       <TextField
+        id="last-name"
         fullWidth
         label="Last Name"
         name="lastName"

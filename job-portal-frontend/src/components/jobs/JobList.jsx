@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   Box,
   Grid,
@@ -34,83 +34,93 @@ const JobList = ({ filters, onJobApply, onJobViewDetails }) => {
   const [sortBy, setSortBy] = useState("postedDate");
   const [sortOrder, setSortOrder] = useState("desc");
   const [appliedJobs, setAppliedJobs] = useState(new Set());
-  const [resumeStatus, setResumeStatus] = useState(null);
   const [showResumeDialog, setShowResumeDialog] = useState(false);
 
-  const { user } = useAuth();
+  const { user, resumeStatus } = useAuth();
   const navigate = useNavigate();
   const itemsPerPage = 12;
+  const prevFiltersRef = useRef();
+  const isInitialMount = useRef(true);
 
-  const fetchJobs = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
+  const fetchJobs = useCallback(
+    async (currentFilters) => {
+      try {
+        setLoading(true);
+        setError(null);
 
-      const params = {
-        page,
-        pageSize: itemsPerPage,
-        sortBy,
-        sortOrder,
-        ...filters,
-      };
+        const params = {
+          page,
+          pageSize: itemsPerPage,
+          sortBy,
+          sortOrder,
+          ...currentFilters,
+        };
 
-      // Remove empty filter values
-      Object.keys(params).forEach((key) => {
-        if (
-          params[key] === "" ||
-          params[key] === null ||
-          params[key] === undefined
-        ) {
-          delete params[key];
-        }
-      });
+        // Remove empty filter values
+        Object.keys(params).forEach((key) => {
+          if (
+            params[key] === "" ||
+            params[key] === null ||
+            params[key] === undefined
+          ) {
+            delete params[key];
+          }
+        });
 
-      const response = await jobsService.getJobs(params);
+        const response = await jobsService.getJobs(params);
 
-      // Handle the API response structure: { success: true, data: { items: [...], totalCount: 27, ... } }
-      const jobsData = response.data || response;
-      setJobs(jobsData.items || []);
-      setTotalPages(jobsData.totalPages || 1);
-      setTotalJobs(jobsData.totalCount || 0);
-      setCurrentPageSize(jobsData.pageSize || itemsPerPage);
-    } catch (err) {
-      console.error("Error fetching jobs:", err);
-      setError("Failed to load jobs. Please try again.");
-    } finally {
-      setLoading(false);
+        // Handle the API response structure: { success: true, data: { items: [...], totalCount: 27, ... } }
+        const jobsData = response.data || response;
+        setJobs(jobsData.items || []);
+        setTotalPages(jobsData.totalPages || 1);
+        setTotalJobs(jobsData.totalCount || 0);
+        setCurrentPageSize(jobsData.pageSize || itemsPerPage);
+      } catch (err) {
+        console.error("Error fetching jobs:", err);
+        setError("Failed to load jobs. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [page, sortBy, sortOrder]
+  );
+
+  useEffect(() => {
+    // Only fetch if filters have actually changed or it's the initial mount
+    const filtersString = JSON.stringify(filters);
+    const prevFiltersString = JSON.stringify(prevFiltersRef.current);
+
+    if (isInitialMount.current || filtersString !== prevFiltersString) {
+      fetchJobs(filters);
+      prevFiltersRef.current = filters;
+      isInitialMount.current = false;
     }
-  }, [page, sortBy, sortOrder, filters]);
+  }, [fetchJobs, filters]);
 
   useEffect(() => {
-    fetchJobs();
-  }, [fetchJobs]);
+    const isJobSeeker =
+      user?.roles?.includes("JobSeeker") ||
+      user?.Roles?.includes("JobSeeker") ||
+      user?.userType === "JobSeeker" ||
+      user?.UserType === "JobSeeker" ||
+      user?.role === "JobSeeker";
 
-  useEffect(() => {
-    if (user?.role === "JobSeeker") {
+    if (isJobSeeker) {
       fetchAppliedJobs();
-      fetchResumeStatus();
     }
   }, [user]);
 
   const fetchAppliedJobs = async () => {
     try {
       const response = await jobsService.getAppliedJobs();
+      const applications =
+        response?.data?.items || response?.items || response || [];
       const appliedJobIds = new Set(
-        (response || []).map((application) => application.jobId)
+        applications.map((application) => application.jobId)
       );
       setAppliedJobs(appliedJobIds);
     } catch (err) {
       console.error("Error fetching applied jobs:", err);
-    }
-  };
-
-  const fetchResumeStatus = async () => {
-    try {
-      const status = await jobsService.getResumeStatus();
-      setResumeStatus(status);
-    } catch (err) {
-      console.error("Error fetching resume status:", err);
-      setResumeStatus({ hasResume: false });
     }
   };
 

@@ -14,7 +14,7 @@ import ProfileEditForm from "../components/profile/ProfileEditForm";
 import { useAuth } from "../hooks/useAuth";
 
 const Profile = () => {
-  const { user, updateProfile } = useAuth();
+  const { user, updateProfile, updateResumeStatus } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
@@ -24,7 +24,8 @@ const Profile = () => {
 
   const handleResumeStatusChange = (status) => {
     console.log("Resume status updated:", status);
-    // This could trigger a refresh of user data or other actions
+    // Update the global resume status
+    updateResumeStatus(status);
   };
 
   const handleEditClick = () => {

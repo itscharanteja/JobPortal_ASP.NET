@@ -196,6 +196,8 @@ const JobFilters = ({ onFilterChange, initialFilters = {} }) => {
 
       {/* Search Bar */}
       <TextField
+        id="job-search-query"
+        name="searchQuery"
         fullWidth
         placeholder="Search jobs, companies, or keywords..."
         value={filters.searchQuery}
@@ -222,6 +224,8 @@ const JobFilters = ({ onFilterChange, initialFilters = {} }) => {
             renderInput={(params) => (
               <TextField
                 {...params}
+                id="job-location"
+                name="location"
                 label="Location"
                 placeholder="Enter city or 'Remote'"
                 fullWidth
@@ -233,8 +237,11 @@ const JobFilters = ({ onFilterChange, initialFilters = {} }) => {
         {/* Job Type */}
         <Grid item xs={12} md={6}>
           <FormControl fullWidth>
-            <InputLabel>Job Type</InputLabel>
+            <InputLabel id="job-type-label">Job Type</InputLabel>
             <Select
+              id="job-type-select"
+              name="jobType"
+              labelId="job-type-label"
               value={filters.jobType}
               label="Job Type"
               onChange={(e) => handleInputChange("jobType", e.target.value)}
@@ -252,8 +259,13 @@ const JobFilters = ({ onFilterChange, initialFilters = {} }) => {
         {/* Experience Level */}
         <Grid item xs={12} md={6}>
           <FormControl fullWidth>
-            <InputLabel>Experience Level</InputLabel>
+            <InputLabel id="experience-level-label">
+              Experience Level
+            </InputLabel>
             <Select
+              id="experience-level-select"
+              name="experienceLevel"
+              labelId="experience-level-label"
               value={filters.experienceLevel}
               label="Experience Level"
               onChange={(e) =>
@@ -273,8 +285,10 @@ const JobFilters = ({ onFilterChange, initialFilters = {} }) => {
         {/* Industry */}
         <Grid item xs={12} md={6}>
           <FormControl fullWidth>
-            <InputLabel>Industry</InputLabel>
+            <InputLabel id="industry-label">Industry</InputLabel>
             <Select
+              id="industry-select"
+              labelId="industry-label"
               value={filters.industry}
               label="Industry"
               onChange={(e) => handleInputChange("industry", e.target.value)}
@@ -324,8 +338,10 @@ const JobFilters = ({ onFilterChange, initialFilters = {} }) => {
             {/* Company Size */}
             <Grid item xs={12} md={6}>
               <FormControl fullWidth>
-                <InputLabel>Company Size</InputLabel>
+                <InputLabel id="company-size-label">Company Size</InputLabel>
                 <Select
+                  id="company-size-select"
+                  labelId="company-size-label"
                   value={filters.companySize}
                   label="Company Size"
                   onChange={(e) =>
@@ -379,6 +395,8 @@ const JobFilters = ({ onFilterChange, initialFilters = {} }) => {
                 renderInput={(params) => (
                   <TextField
                     {...params}
+                    id="job-skills"
+                    name="skills"
                     label="Skills"
                     placeholder="Add skills..."
                     helperText="Type and press Enter to add custom skills"
