@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Paper,
   TextField,
@@ -44,18 +44,16 @@ const JobFilters = ({ onFilterChange, initialFilters = {} }) => {
 
   // Options for dropdowns
   const jobTypes = [
-    "Full-time",
-    "Part-time",
-    "Contract",
-    "Internship",
-    "Freelance",
+    { value: "FullTime", label: "Full-time" },
+    { value: "PartTime", label: "Part-time" },
+    { value: "Contract", label: "Contract" },
+    { value: "Internship", label: "Internship" },
   ];
 
   const experienceLevels = [
-    "Entry Level",
-    "Mid Level",
-    "Senior Level",
-    "Executive Level",
+    { value: "EntryLevel", label: "Entry Level" },
+    { value: "MidLevel", label: "Mid Level" },
+    { value: "SeniorLevel", label: "Senior Level" },
   ];
 
   const companySizes = [
@@ -64,19 +62,6 @@ const JobFilters = ({ onFilterChange, initialFilters = {} }) => {
     "Medium (51-200)",
     "Large (201-1000)",
     "Enterprise (1000+)",
-  ];
-
-  const industries = [
-    "Technology",
-    "Finance",
-    "Healthcare",
-    "Education",
-    "Manufacturing",
-    "Retail",
-    "Marketing",
-    "Consulting",
-    "Government",
-    "Non-profit",
   ];
 
   const commonSkills = [
@@ -102,53 +87,43 @@ const JobFilters = ({ onFilterChange, initialFilters = {} }) => {
     "Data Analysis",
   ];
 
-  const commonLocations = [
-    "New York, NY",
-    "San Francisco, CA",
-    "Los Angeles, CA",
-    "Chicago, IL",
-    "Boston, MA",
-    "Seattle, WA",
-    "Austin, TX",
-    "Denver, CO",
-    "Atlanta, GA",
-    "Miami, FL",
-    "Remote",
-  ];
-
   useEffect(() => {
     const timer = setTimeout(() => {
       onFilterChange(filters);
-    }, 500); // Debounce filter changes
+    }, 300);
 
     return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters]); // onFilterChange is intentionally omitted to prevent infinite loops
+  }, [filters, onFilterChange]);
 
-  const handleInputChange = (field, value) => {
+  const handleInputChange = useCallback((field, value) => {
     setFilters((prev) => ({
       ...prev,
       [field]: value,
     }));
-  };
+  }, []);
 
-  const handleSalaryChange = (event, newValue) => {
+  const handleSalaryChange = useCallback((event, newValue) => {
     setSalaryRange(newValue);
     setFilters((prev) => ({
       ...prev,
       salaryMin: newValue[0],
       salaryMax: newValue[1],
     }));
-  };
+  }, []);
 
-  const handleSkillsChange = (event, newValue) => {
+  const handleSkillsChange = useCallback((event, newValue) => {
+    // Ensure skills is always an array and filter out empty values
+    const cleanSkills = Array.isArray(newValue)
+      ? newValue.filter((skill) => skill && skill.trim() !== "")
+      : [];
+
     setFilters((prev) => ({
       ...prev,
-      skills: newValue,
+      skills: cleanSkills,
     }));
-  };
+  }, []);
 
-  const clearAllFilters = () => {
+  const clearAllFilters = useCallback(() => {
     const clearedFilters = {
       searchQuery: "",
       location: "",
@@ -163,26 +138,28 @@ const JobFilters = ({ onFilterChange, initialFilters = {} }) => {
     };
     setFilters(clearedFilters);
     setSalaryRange([0, 200000]);
-  };
+    // Immediately trigger filter change for better UX
+    onFilterChange(clearedFilters);
+  }, [onFilterChange]);
 
   const formatSalary = (value) => {
     return `$${(value / 1000).toFixed(0)}k`;
   };
 
   return (
-    <Paper sx={{ p: 3, mb: 3 }}>
+    <Paper sx={{ p: 2, mb: 3 }}>
       {/* Header */}
       <Box
         sx={{
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          mb: 3,
+          mb: 2,
         }}
       >
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <FilterList />
-          <Typography variant="h6">Filters</Typography>
+          <Typography variant="h6">Filters & Sort</Typography>
         </Box>
         <Button
           startIcon={<Clear />}
@@ -194,7 +171,7 @@ const JobFilters = ({ onFilterChange, initialFilters = {} }) => {
         </Button>
       </Box>
 
-      {/* Search Bar */}
+      {/* Search Bar - Full Width */}
       <TextField
         id="job-search-query"
         name="searchQuery"
@@ -205,42 +182,31 @@ const JobFilters = ({ onFilterChange, initialFilters = {} }) => {
         InputProps={{
           startAdornment: <Search sx={{ mr: 1, color: "action.active" }} />,
         }}
-        sx={{ mb: 3 }}
+        sx={{ mb: 2 }}
       />
 
-      <Grid container spacing={3}>
+      {/* Horizontal Filters Row */}
+      <Grid container spacing={2} alignItems="center" sx={{ mb: 2 }}>
         {/* Location */}
-        <Grid item xs={12} md={6}>
-          <Autocomplete
-            freeSolo
-            options={commonLocations}
+        <Grid item xs={12} sm={6} md={3}>
+          <TextField
+            id="job-location"
+            name="location"
+            label="Location"
+            placeholder="City or Remote"
+            fullWidth
+            size="small"
             value={filters.location}
-            onChange={(event, newValue) =>
-              handleInputChange("location", newValue || "")
-            }
-            onInputChange={(event, newInputValue) =>
-              handleInputChange("location", newInputValue)
-            }
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                id="job-location"
-                name="location"
-                label="Location"
-                placeholder="Enter city or 'Remote'"
-                fullWidth
-              />
-            )}
+            onChange={(e) => handleInputChange("location", e.target.value)}
           />
         </Grid>
 
         {/* Job Type */}
-        <Grid item xs={12} md={6}>
-          <FormControl fullWidth>
+        <Grid item xs={12} sm={6} md={2}>
+          <FormControl fullWidth size="small">
             <InputLabel id="job-type-label">Job Type</InputLabel>
             <Select
               id="job-type-select"
-              name="jobType"
               labelId="job-type-label"
               value={filters.jobType}
               label="Job Type"
@@ -248,8 +214,8 @@ const JobFilters = ({ onFilterChange, initialFilters = {} }) => {
             >
               <MenuItem value="">All Types</MenuItem>
               {jobTypes.map((type) => (
-                <MenuItem key={type} value={type}>
-                  {type}
+                <MenuItem key={type.value} value={type.value}>
+                  {type.label}
                 </MenuItem>
               ))}
             </Select>
@@ -257,55 +223,71 @@ const JobFilters = ({ onFilterChange, initialFilters = {} }) => {
         </Grid>
 
         {/* Experience Level */}
-        <Grid item xs={12} md={6}>
-          <FormControl fullWidth>
-            <InputLabel id="experience-level-label">
-              Experience Level
-            </InputLabel>
+        <Grid item xs={12} sm={6} md={2}>
+          <FormControl fullWidth size="small">
+            <InputLabel id="experience-level-label">Experience</InputLabel>
             <Select
               id="experience-level-select"
-              name="experienceLevel"
               labelId="experience-level-label"
               value={filters.experienceLevel}
-              label="Experience Level"
+              label="Experience"
               onChange={(e) =>
                 handleInputChange("experienceLevel", e.target.value)
               }
             >
               <MenuItem value="">All Levels</MenuItem>
               {experienceLevels.map((level) => (
-                <MenuItem key={level} value={level}>
-                  {level}
+                <MenuItem key={level.value} value={level.value}>
+                  {level.label}
                 </MenuItem>
               ))}
             </Select>
           </FormControl>
         </Grid>
 
-        {/* Industry */}
-        <Grid item xs={12} md={6}>
-          <FormControl fullWidth>
-            <InputLabel id="industry-label">Industry</InputLabel>
+        {/* Remote Work Toggle */}
+        <Grid item xs={12} sm={6} md={2}>
+          <FormControlLabel
+            control={
+              <Switch
+                id="remote-work-toggle-advanced"
+                checked={filters.isRemote}
+                onChange={(e) => handleInputChange("isRemote", e.target.checked)}
+                name="isRemote"
+                inputProps={{ 'aria-label': 'Remote work only filter' }}
+              />
+            }
+            label="Remote Only"
+          />
+        </Grid>
+
+        {/* Sort By - Adding it to filters */}
+        <Grid item xs={12} sm={6} md={3}>
+          <FormControl fullWidth size="small">
+            <InputLabel id="sort-label">Sort By</InputLabel>
             <Select
-              id="industry-select"
-              labelId="industry-label"
-              value={filters.industry}
-              label="Industry"
-              onChange={(e) => handleInputChange("industry", e.target.value)}
+              id="sort-select"
+              labelId="sort-label"
+              value={`${filters.sortBy || 'createdAt'}_${filters.sortOrder || 'desc'}`}
+              label="Sort By"
+              onChange={(e) => {
+                const [field, order] = e.target.value.split("_");
+                handleInputChange("sortBy", field);
+                handleInputChange("sortOrder", order);
+              }}
             >
-              <MenuItem value="">All Industries</MenuItem>
-              {industries.map((industry) => (
-                <MenuItem key={industry} value={industry}>
-                  {industry}
-                </MenuItem>
-              ))}
+              <MenuItem value="createdAt_desc">Newest First</MenuItem>
+              <MenuItem value="createdAt_asc">Oldest First</MenuItem>
+              <MenuItem value="title_asc">Title A-Z</MenuItem>
+              <MenuItem value="title_desc">Title Z-A</MenuItem>
+              <MenuItem value="companyName_asc">Company A-Z</MenuItem>
+              <MenuItem value="companyName_desc">Company Z-A</MenuItem>
             </Select>
           </FormControl>
         </Grid>
       </Grid>
 
-      {/* Advanced Filters */}
-      <Accordion sx={{ mt: 3 }}>
+      <Accordion defaultExpanded>
         <AccordionSummary expandIcon={<ExpandMore />}>
           <Typography>Advanced Filters</Typography>
         </AccordionSummary>
@@ -325,6 +307,7 @@ const JobFilters = ({ onFilterChange, initialFilters = {} }) => {
                 min={0}
                 max={300000}
                 step={5000}
+                aria-label="Salary range"
                 marks={[
                   { value: 0, label: "$0" },
                   { value: 50000, label: "$50k" },
@@ -363,10 +346,13 @@ const JobFilters = ({ onFilterChange, initialFilters = {} }) => {
               <FormControlLabel
                 control={
                   <Switch
+                    id="remote-work-toggle-accordion"
                     checked={filters.isRemote}
                     onChange={(e) =>
                       handleInputChange("isRemote", e.target.checked)
                     }
+                    name="isRemoteAdvanced"
+                    inputProps={{ 'aria-label': 'Remote work only filter in advanced options' }}
                   />
                 }
                 label="Remote Work Only"

@@ -22,7 +22,13 @@ import { jobsService } from "../../services/jobsService";
 import { useAuth } from "../../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 
-const JobList = ({ filters, onJobApply, onJobViewDetails }) => {
+const JobList = ({
+  filters,
+  sortBy: externalSortBy,
+  sortOrder: externalSortOrder,
+  onJobApply,
+  onJobViewDetails,
+}) => {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -31,8 +37,8 @@ const JobList = ({ filters, onJobApply, onJobViewDetails }) => {
   const [totalPages, setTotalPages] = useState(0);
   const [totalJobs, setTotalJobs] = useState(0);
   const [currentPageSize, setCurrentPageSize] = useState(0);
-  const [sortBy, setSortBy] = useState("postedDate");
-  const [sortOrder, setSortOrder] = useState("desc");
+  const sortBy = externalSortBy || "createdAt";
+  const sortOrder = externalSortOrder || "desc";
   const [appliedJobs, setAppliedJobs] = useState(new Set());
   const [showResumeDialog, setShowResumeDialog] = useState(false);
 
@@ -48,12 +54,35 @@ const JobList = ({ filters, onJobApply, onJobViewDetails }) => {
         setLoading(true);
         setError(null);
 
+        // Map frontend filters to backend API parameters
         const params = {
           page,
           pageSize: itemsPerPage,
           sortBy,
           sortOrder,
-          ...currentFilters,
+          // Search and location
+          searchQuery: currentFilters.searchQuery || undefined,
+          location: currentFilters.location || undefined,
+          // Job properties
+          jobType: currentFilters.jobType || undefined,
+          experienceLevel: currentFilters.experienceLevel || undefined,
+          // Salary range
+          minSalary:
+            currentFilters.salaryMin > 0 ? currentFilters.salaryMin : undefined,
+          maxSalary:
+            currentFilters.salaryMax < 200000
+              ? currentFilters.salaryMax
+              : undefined,
+          // Company properties
+          companySize: currentFilters.companySize || undefined,
+          industry: currentFilters.industry || undefined,
+          // Remote work
+          isRemote: currentFilters.isRemote || undefined,
+          // Skills array
+          skills:
+            currentFilters.skills && currentFilters.skills.length > 0
+              ? currentFilters.skills.join(",")
+              : undefined,
         };
 
         // Remove empty filter values
@@ -61,23 +90,63 @@ const JobList = ({ filters, onJobApply, onJobViewDetails }) => {
           if (
             params[key] === "" ||
             params[key] === null ||
-            params[key] === undefined
+            params[key] === undefined ||
+            (Array.isArray(params[key]) && params[key].length === 0) ||
+            (typeof params[key] === "string" && params[key].trim() === "")
           ) {
             delete params[key];
           }
         });
 
+        console.log("Fetching jobs with params:", params); // Debug log
         const response = await jobsService.getJobs(params);
 
         // Handle the API response structure: { success: true, data: { items: [...], totalCount: 27, ... } }
         const jobsData = response.data || response;
-        setJobs(jobsData.items || []);
+        let jobItems = jobsData.items || [];
+
+        // Apply client-side sorting as fallback if backend sorting isn't working properly
+        if (sortBy && sortOrder) {
+          jobItems = [...jobItems].sort((a, b) => {
+            let aValue = a[sortBy];
+            let bValue = b[sortBy];
+
+            // Handle different data types
+            if (sortBy === 'createdAt') {
+              aValue = new Date(aValue);
+              bValue = new Date(bValue);
+            } else if (typeof aValue === 'string') {
+              aValue = aValue.toLowerCase();
+              bValue = bValue.toLowerCase();
+            } else if (typeof aValue === 'number') {
+              aValue = aValue || 0;
+              bValue = bValue || 0;
+            }
+
+            // Compare values
+            let comparison = 0;
+            if (aValue > bValue) {
+              comparison = 1;
+            } else if (aValue < bValue) {
+              comparison = -1;
+            }
+
+            // Apply sort order
+            return sortOrder === 'desc' ? comparison * -1 : comparison;
+          });
+        }
+
+        setJobs(jobItems);
         setTotalPages(jobsData.totalPages || 1);
         setTotalJobs(jobsData.totalCount || 0);
         setCurrentPageSize(jobsData.pageSize || itemsPerPage);
       } catch (err) {
         console.error("Error fetching jobs:", err);
         setError("Failed to load jobs. Please try again.");
+        // Reset jobs on error to show clean state
+        setJobs([]);
+        setTotalPages(0);
+        setTotalJobs(0);
       } finally {
         setLoading(false);
       }
@@ -85,17 +154,43 @@ const JobList = ({ filters, onJobApply, onJobViewDetails }) => {
     [page, sortBy, sortOrder]
   );
 
+  // Effect to handle filter changes, page changes, and sort changes
   useEffect(() => {
-    // Only fetch if filters have actually changed or it's the initial mount
     const filtersString = JSON.stringify(filters);
     const prevFiltersString = JSON.stringify(prevFiltersRef.current);
+    const filtersChanged = filtersString !== prevFiltersString;
 
-    if (isInitialMount.current || filtersString !== prevFiltersString) {
-      fetchJobs(filters);
-      prevFiltersRef.current = filters;
+    console.log("useEffect triggered:", {
+      page,
+      sortBy,
+      sortOrder,
+      filtersChanged,
+      isInitialMount: isInitialMount.current,
+      filters: filtersString,
+    }); // Debug log
+
+    if (isInitialMount.current) {
+      // Initial load
+      console.log("Initial load triggered"); // Debug log
       isInitialMount.current = false;
+      prevFiltersRef.current = filters;
+      fetchJobs(filters);
+    } else if (filtersChanged) {
+      // Filters changed - reset to page 1 and fetch
+      console.log("Filters changed, resetting page"); // Debug log
+      prevFiltersRef.current = filters;
+      if (page !== 1) {
+        setPage(1); // This will trigger another useEffect call with page = 1
+      } else {
+        fetchJobs(filters);
+      }
+    } else {
+      // Only page or sort changed - fetch with current filters
+      console.log("Page or sort changed, fetching jobs for page", page, "sortBy", sortBy, "sortOrder", sortOrder); // Debug log
+      fetchJobs(filters);
     }
-  }, [fetchJobs, filters]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters, page, sortBy, sortOrder]); // Add sortBy and sortOrder to dependencies
 
   useEffect(() => {
     const isJobSeeker =
@@ -129,15 +224,9 @@ const JobList = ({ filters, onJobApply, onJobViewDetails }) => {
   };
 
   const handlePageChange = (event, newPage) => {
+    console.log("Page changing from", page, "to", newPage); // Debug log
     setPage(newPage);
     window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
-  const handleSortChange = (event) => {
-    const [field, order] = event.target.value.split("_");
-    setSortBy(field);
-    setSortOrder(order);
-    setPage(1); // Reset to first page when sorting changes
   };
 
   const handleApply = async (jobId) => {
@@ -204,25 +293,6 @@ const JobList = ({ filters, onJobApply, onJobViewDetails }) => {
               )} of ${totalJobs} jobs`
             : "No jobs found"}
         </Typography>
-
-        {totalJobs > 0 && (
-          <FormControl size="small" sx={{ minWidth: 200 }}>
-            <InputLabel>Sort by</InputLabel>
-            <Select
-              value={`${sortBy}_${sortOrder}`}
-              label="Sort by"
-              onChange={handleSortChange}
-            >
-              <MenuItem value="postedDate_desc">Newest First</MenuItem>
-              <MenuItem value="postedDate_asc">Oldest First</MenuItem>
-              <MenuItem value="title_asc">Title A-Z</MenuItem>
-              <MenuItem value="title_desc">Title Z-A</MenuItem>
-              <MenuItem value="salaryMax_desc">Highest Salary</MenuItem>
-              <MenuItem value="salaryMax_asc">Lowest Salary</MenuItem>
-              <MenuItem value="company_asc">Company A-Z</MenuItem>
-            </Select>
-          </FormControl>
-        )}
       </Box>
 
       {/* Job Grid */}

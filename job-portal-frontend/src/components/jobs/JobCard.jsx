@@ -52,6 +52,15 @@ const JobCard = ({
     return typeMap[type] || type;
   };
 
+  const formatExperienceLevel = (level) => {
+    const levelMap = {
+      EntryLevel: "Entry Level",
+      MidLevel: "Mid Level",
+      SeniorLevel: "Senior Level"
+    };
+    return levelMap[level] || level;
+  };
+
   const formatPostedDate = (dateString) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -131,7 +140,7 @@ const JobCard = ({
           />
           {job.experienceLevel && (
             <Chip
-              label={job.experienceLevel.replace(/([A-Z])/g, " $1").trim()}
+              label={formatExperienceLevel(job.experienceLevel)}
               size="small"
               color="secondary"
               variant="outlined"

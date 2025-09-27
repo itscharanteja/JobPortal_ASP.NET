@@ -78,6 +78,8 @@ const AdminJobList = () => {
   const handleCloseApplicantsDialog = () => {
     setApplicantsDialogOpen(false);
     setSelectedJobId(null);
+    // Refresh jobs list to update application counts if status changed
+    fetchAdminJobs();
   };
 
   // Job CRUD operations
@@ -428,12 +430,16 @@ const AdminJobList = () => {
         fullWidth
       >
         <DialogTitle>
-          Job Applicants
-          {selectedJobId && (
-            <Typography variant="body2" color="text.secondary">
-              Job ID: {selectedJobId}
-            </Typography>
-          )}
+          <Box display="flex" justifyContent="space-between" alignItems="center">
+            <Box>
+              <Typography variant="h6">Job Applicants</Typography>
+              {selectedJobId && jobs.find(job => job.id === selectedJobId) && (
+                <Typography variant="body2" color="text.secondary">
+                  {jobs.find(job => job.id === selectedJobId).title}
+                </Typography>
+              )}
+            </Box>
+          </Box>
         </DialogTitle>
         <DialogContent>
           {selectedJobId && <JobApplicants jobId={selectedJobId} />}

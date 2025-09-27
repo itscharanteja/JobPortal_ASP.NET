@@ -1,41 +1,37 @@
 import React, { useState, useCallback, useMemo } from "react";
-import {
-  Container,
-  Typography,
-  Box,
-  Alert,
-  Snackbar,
-  Fab,
-  useMediaQuery,
-  useTheme,
-  Drawer,
-  IconButton,
-} from "@mui/material";
-import { FilterList, Close } from "@mui/icons-material";
-import JobFilters from "../components/jobs/JobFilters";
+import { Container, Typography, Box, Alert, Snackbar } from "@mui/material";
+import JobFiltersHorizontal from "../components/jobs/JobFiltersHorizontal";
 import JobList from "../components/jobs/JobList";
 import AdminJobList from "../components/jobs/AdminJobList";
 import { useAuth } from "../hooks/useAuth";
 
 const Jobs = () => {
   const [filters, setFilters] = useState({});
+  const [sortBy, setSortBy] = useState("createdAt");
+  const [sortOrder, setSortOrder] = useState("desc");
   const [snackbar, setSnackbar] = useState({
     open: false,
     message: "",
     severity: "success",
   });
-  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   const { user } = useAuth();
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
   const handleFilterChange = useCallback((newFilters) => {
     setFilters(newFilters);
   }, []);
 
+  const handleSortChange = useCallback((newSortBy, newSortOrder) => {
+    setSortBy(newSortBy);
+    setSortOrder(newSortOrder);
+  }, []);
+
   // Memoize filters to prevent unnecessary re-renders
   const memoizedFilters = useMemo(() => filters, [filters]);
+
+  // Memoize sort values
+  const memoizedSortBy = useMemo(() => sortBy, [sortBy]);
+  const memoizedSortOrder = useMemo(() => sortOrder, [sortOrder]);
 
   // Helper function to check if user is admin
   const isAdmin = useCallback((user) => {
@@ -68,12 +64,14 @@ const Jobs = () => {
     setSnackbar((prev) => ({ ...prev, open: false }));
   };
 
-  const FiltersComponent = () => (
-    <JobFilters
+  // Memoize the FiltersComponent to prevent recreation on every render
+  const FiltersComponent = useMemo(() => (
+    <JobFiltersHorizontal
       onFilterChange={handleFilterChange}
+      onSortChange={handleSortChange}
       initialFilters={memoizedFilters}
     />
-  );
+  ), [handleFilterChange, handleSortChange, memoizedFilters]);
 
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
@@ -101,74 +99,20 @@ const Jobs = () => {
         // Admin view - show posted jobs with applicant management
         <AdminJobList />
       ) : (
-        // Job seeker view - show job search with filters
-        <Box sx={{ display: "flex", gap: 3 }}>
-          {/* Desktop Filters Sidebar */}
-          {!isMobile && (
-            <Box sx={{ width: 350, flexShrink: 0 }}>
-              <FiltersComponent />
-            </Box>
-          )}
+        // Job seeker view - show job search with horizontal filters
+        <Box>
+          {/* Horizontal Filters at Top */}
+          {FiltersComponent}
 
-          {/* Main Content */}
-          <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-            <JobList
-              filters={memoizedFilters}
-              onJobApply={handleJobApply}
-              onJobViewDetails={handleJobViewDetails}
-            />
-          </Box>
+          {/* Job List */}
+          <JobList
+            filters={memoizedFilters}
+            sortBy={memoizedSortBy}
+            sortOrder={memoizedSortOrder}
+            onJobApply={handleJobApply}
+            onJobViewDetails={handleJobViewDetails}
+          />
         </Box>
-      )}
-
-      {/* Mobile Filters - Only for job seekers */}
-      {isMobile && !userIsAdmin && (
-        <>
-          {/* Mobile Filter Button */}
-          <Fab
-            color="primary"
-            sx={{
-              position: "fixed",
-              bottom: 16,
-              right: 16,
-              zIndex: 1000,
-            }}
-            onClick={() => setMobileFiltersOpen(true)}
-          >
-            <FilterList />
-          </Fab>
-
-          {/* Mobile Filter Drawer */}
-          <Drawer
-            anchor="right"
-            open={mobileFiltersOpen}
-            onClose={() => setMobileFiltersOpen(false)}
-            sx={{
-              "& .MuiDrawer-paper": {
-                width: "100%",
-                maxWidth: 400,
-                p: 0,
-              },
-            }}
-          >
-            <Box
-              sx={{
-                p: 2,
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              <Typography variant="h6">Filters</Typography>
-              <IconButton onClick={() => setMobileFiltersOpen(false)}>
-                <Close />
-              </IconButton>
-            </Box>
-            <Box sx={{ px: 2, pb: 2 }}>
-              <FiltersComponent />
-            </Box>
-          </Drawer>
-        </>
       )}
 
       {/* Success/Error Snackbar */}

@@ -44,4 +44,27 @@ export const adminService = {
       throw error.response?.data || { message: "Failed to fetch admin jobs" };
     }
   },
+
+  // Update applicant status (admin only)
+  async updateApplicantStatus(applicationId, status, notes = "") {
+    try {
+      const response = await api.patch(`/admin/jobs/applications/${applicationId}/status`, {
+        status,
+        notes
+      });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: "Failed to update applicant status" };
+    }
+  },
+
+  // Get application details (admin only)
+  async getApplicationDetails(applicationId) {
+    try {
+      const response = await api.get(`/admin/jobs/applications/${applicationId}`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: "Failed to fetch application details" };
+    }
+  },
 };
