@@ -1,0 +1,17 @@
+node_modules/
+dist/
+build/
+.git/
+.gitignore
+README.md
+Dockerfile*
+docker-compose*
+.dockerignore
+coverage/
+.nyc_output/
+.env
+.env.local
+.env.development
+.env.production
+*.log
+.DS_Store

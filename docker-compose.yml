@@ -1,0 +1,72 @@
+services:
+  # Database service
+  database:
+    image: postgres:15-alpine
+    container_name: jobportal_db
+    environment:
+      POSTGRES_DB: jobportal
+      POSTGRES_USER: jobportal_user
+      POSTGRES_PASSWORD: jobportal_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db:/docker-entrypoint-initdb.d
+    networks:
+      - jobportal_network
+    restart: unless-stopped
+
+  # Backend API service
+  backend:
+    build:
+      context: ./JobPortalApi
+      dockerfile: Dockerfile
+    container_name: jobportal_api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:5000
+      - ConnectionStrings__DefaultConnection=Host=database;Database=jobportal;Username=jobportal_user;Password=jobportal_password
+    ports:
+      - "5001:5000"
+    depends_on:
+      - database
+    volumes:
+      - ./JobPortalApi/Uploads:/app/Uploads
+    networks:
+      - jobportal_network
+    restart: unless-stopped
+
+  # Frontend service
+  frontend:
+    build:
+      context: ./job-portal-frontend
+      dockerfile: Dockerfile
+    container_name: jobportal_frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - jobportal_network
+    restart: unless-stopped
+
+  # Redis for caching (optional)
+  redis:
+    image: redis:7-alpine
+    container_name: jobportal_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - jobportal_network
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  jobportal_network:
+    driver: bridge

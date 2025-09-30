@@ -49,10 +49,9 @@ else if (builder.Environment.IsEnvironment("Test"))
 }
 else
 {
-    // Use a different database provider for production, e.g., SQL Server or PostgreSQL
-    // For now, let's assume SQLite for simplicity or use InMemory for testing if needed
+    // Use InMemory database for production (for now)
     builder.Services.AddDbContext<ApplicationDbContext>(options =>
-        options.UseInMemoryDatabase("JobPortalDb")); // Example for non-development environments
+        options.UseInMemoryDatabase("JobPortalDb"));
 }
 
 // Add File Storage Service
@@ -63,20 +62,24 @@ if (builder.Environment.IsEnvironment("Test") || builder.Environment.IsDevelopme
 }
 else
 {
-    // Add Azure Blob Storage for production environments
+    // Check if Azure Storage is configured for production
     var connectionString = builder.Configuration["AzureStorage:ConnectionString"];
-    if (string.IsNullOrEmpty(connectionString))
+    if (!string.IsNullOrEmpty(connectionString))
     {
-        throw new InvalidOperationException("Azure Storage connection string is required for production environment.");
+        // Use Azure Blob Storage if configured
+        builder.Services.AddSingleton(x => new BlobServiceClient(connectionString));
+        builder.Services.AddScoped<IFileStorageService>(provider => 
+            new AzureBlobStorageService(
+                provider.GetRequiredService<BlobServiceClient>(),
+                provider.GetRequiredService<IConfiguration>(),
+                provider.GetRequiredService<ILogger<AzureBlobStorageService>>()
+            ));
     }
-    
-    builder.Services.AddSingleton(x => new BlobServiceClient(connectionString));
-    builder.Services.AddScoped<IFileStorageService>(provider => 
-        new AzureBlobStorageService(
-            provider.GetRequiredService<BlobServiceClient>(),
-            provider.GetRequiredService<IConfiguration>(),
-            provider.GetRequiredService<ILogger<AzureBlobStorageService>>()
-        ));
+    else
+    {
+        // Fall back to database storage
+        builder.Services.AddScoped<IFileStorageService, DatabaseFileStorageService>();
+    }
 }
 
 // Add Identity with Role support
@@ -135,4 +138,101 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+// Initialize database (ensure it's created and seeded for InMemory or apply migrations for real DB)
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    
+    // Ensure database is created
+    context.Database.EnsureCreated();
+    
+    // Seed roles and users
+    Console.WriteLine("Starting database seeding...");
+    SeedDataAsync(userManager, roleManager).Wait();
+    Console.WriteLine("Database seeding completed.");
+}
+
 app.Run();
+
+static async Task SeedDataAsync(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager)
+{
+    Console.WriteLine("Seeding roles...");
+    // Create roles
+    var roles = new[] { "Admin", "Recruiter", "JobSeeker" };
+    foreach (var role in roles)
+    {
+        if (!await roleManager.RoleExistsAsync(role))
+        {
+            Console.WriteLine($"Creating role: {role}");
+            await roleManager.CreateAsync(new IdentityRole(role));
+        }
+        else
+        {
+            Console.WriteLine($"Role already exists: {role}");
+        }
+    }
+
+    Console.WriteLine("Seeding admin user...");
+    // Create admin user
+    var adminEmail = "admin@jobportal.com";
+    if (await userManager.FindByEmailAsync(adminEmail) == null)
+    {
+        Console.WriteLine($"Creating admin user: {adminEmail}");
+        var adminUser = new ApplicationUser
+        {
+            UserName = adminEmail,
+            Email = adminEmail,
+            EmailConfirmed = true,
+            FirstName = "Admin",
+            LastName = "User"
+        };
+        
+        var result = await userManager.CreateAsync(adminUser, "Admin@123");
+        if (result.Succeeded)
+        {
+            Console.WriteLine("Admin user created successfully");
+            await userManager.AddToRoleAsync(adminUser, "Admin");
+        }
+        else
+        {
+            Console.WriteLine($"Failed to create admin user: {string.Join(", ", result.Errors.Select(e => e.Description))}");
+        }
+    }
+    else
+    {
+        Console.WriteLine("Admin user already exists");
+    }
+
+    Console.WriteLine("Seeding job seeker user...");
+    // Create job seeker user
+    var jobSeekerEmail = "jobseeker@example.com";
+    if (await userManager.FindByEmailAsync(jobSeekerEmail) == null)
+    {
+        Console.WriteLine($"Creating job seeker user: {jobSeekerEmail}");
+        var jobSeekerUser = new ApplicationUser
+        {
+            UserName = jobSeekerEmail,
+            Email = jobSeekerEmail,
+            EmailConfirmed = true,
+            FirstName = "Charan Sri Teja",
+            LastName = "Burra"
+        };
+        
+        var result = await userManager.CreateAsync(jobSeekerUser, "Test@123");
+        if (result.Succeeded)
+        {
+            Console.WriteLine("Job seeker user created successfully");
+            await userManager.AddToRoleAsync(jobSeekerUser, "JobSeeker");
+        }
+        else
+        {
+            Console.WriteLine($"Failed to create job seeker user: {string.Join(", ", result.Errors.Select(e => e.Description))}");
+        }
+    }
+    else
+    {
+        Console.WriteLine("Job seeker user already exists");
+    }
+}

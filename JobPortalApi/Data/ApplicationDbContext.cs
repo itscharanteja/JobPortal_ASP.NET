@@ -13,6 +13,7 @@ namespace JobPortalApi.Data
 
         public DbSet<Job> Jobs { get; set; }
         public DbSet<JobApplication> JobApplications { get; set; }
+        public DbSet<FileData> FileData { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -41,6 +42,25 @@ namespace JobPortalApi.Data
                 .WithMany(u => u.Applications)
                 .HasForeignKey(ja => ja.ApplicantId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // Configure FileData entity
+            builder.Entity<FileData>()
+                .HasKey(f => f.Id);
+            
+            builder.Entity<FileData>()
+                .Property(f => f.FileName)
+                .IsRequired()
+                .HasMaxLength(255);
+            
+            builder.Entity<FileData>()
+                .Property(f => f.ContentType)
+                .IsRequired()
+                .HasMaxLength(100);
+            
+            builder.Entity<FileData>()
+                .Property(f => f.Container)
+                .IsRequired()
+                .HasMaxLength(100);
         }
     }
 }

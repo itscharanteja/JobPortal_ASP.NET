@@ -1,0 +1,61 @@
+services:
+  # Database service
+  database:
+    image: postgres:15-alpine
+    container_name: jobportal_db_dev
+    environment:
+      POSTGRES_DB: jobportal_dev
+      POSTGRES_USER: jobportal_user
+      POSTGRES_PASSWORD: jobportal_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    networks:
+      - jobportal_dev_network
+
+  # Backend API service (development mode)
+  backend:
+    build:
+      context: ./JobPortalApi
+      dockerfile: Dockerfile.dev
+    container_name: jobportal_api_dev
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:5000
+      - ConnectionStrings__DefaultConnection=Host=database;Database=jobportal_dev;Username=jobportal_user;Password=jobportal_password
+    ports:
+      - "5000:5000"
+    depends_on:
+      - database
+    volumes:
+      - ./JobPortalApi:/app
+      - /app/bin
+      - /app/obj
+    networks:
+      - jobportal_dev_network
+
+  # Frontend service (development mode)
+  frontend:
+    build:
+      context: ./job-portal-frontend
+      dockerfile: Dockerfile.dev
+    container_name: jobportal_frontend_dev
+    environment:
+      - VITE_API_URL=http://localhost:5000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    volumes:
+      - ./job-portal-frontend:/app
+      - /app/node_modules
+    networks:
+      - jobportal_dev_network
+
+volumes:
+  postgres_dev_data:
+
+networks:
+  jobportal_dev_network:
+    driver: bridge

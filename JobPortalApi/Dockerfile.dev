@@ -1,0 +1,27 @@
+# Development Dockerfile for ASP.NET Core with hot reload
+FROM mcr.microsoft.com/dotnet/sdk:9.0
+WORKDIR /app
+
+# Install dotnet tools
+RUN dotnet tool install --global dotnet-ef
+
+# Expose ports
+EXPOSE 5000
+
+# Set environment variables
+ENV ASPNETCORE_ENVIRONMENT=Development
+ENV ASPNETCORE_URLS=http://+:5000
+ENV PATH="${PATH}:/root/.dotnet/tools"
+
+# Copy csproj and restore dependencies
+COPY *.csproj ./
+RUN dotnet restore
+
+# Copy everything else
+COPY . ./
+
+# Create uploads directory
+RUN mkdir -p /app/Uploads
+
+# Run with hot reload
+CMD ["dotnet", "watch", "run", "--urls", "http://0.0.0.0:5000"]

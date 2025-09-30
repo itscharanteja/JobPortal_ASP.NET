@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Http;
 using JobPortalApi.Data;
+using JobPortalApi.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace JobPortalApi.Services
@@ -8,15 +9,6 @@ namespace JobPortalApi.Services
     {
         private readonly ApplicationDbContext _context;
         private readonly ILogger<DatabaseFileStorageService> _logger;
-
-        public class FileData
-        {
-            public int Id { get; set; }
-            public required string FileName { get; set; }
-            public required string ContentType { get; set; }
-            public required byte[] Content { get; set; }
-            public required string Container { get; set; }
-        }
 
         public DatabaseFileStorageService(
             ApplicationDbContext context,
@@ -39,7 +31,7 @@ namespace JobPortalApi.Services
                 Container = containerName
             };
 
-            _context.Set<FileData>().Add(fileData);
+            _context.FileData.Add(fileData);
             await _context.SaveChangesAsync();
 
             return fileData.FileName;
@@ -47,19 +39,19 @@ namespace JobPortalApi.Services
 
         public async Task DeleteFileAsync(string fileUrl, string containerName)
         {
-            var file = await _context.Set<FileData>()
+            var file = await _context.FileData
                 .FirstOrDefaultAsync(f => f.FileName == fileUrl && f.Container == containerName);
 
             if (file != null)
             {
-                _context.Set<FileData>().Remove(file);
+                _context.FileData.Remove(file);
                 await _context.SaveChangesAsync();
             }
         }
 
         public async Task<string> GetFileUrlWithSasToken(string blobPath, string containerName)
         {
-            var file = await _context.Set<FileData>()
+            var file = await _context.FileData
                 .FirstOrDefaultAsync(f => f.FileName == blobPath && f.Container == containerName);
 
             if (file == null)
