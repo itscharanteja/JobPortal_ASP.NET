@@ -230,16 +230,16 @@ Services:
 
 - [x] Backend scaffold with EF Core & JobsController
 - [x] Add migrations & database
-- [ ] Add Identity & JWT authentication
-- [ ] Implement AuthController (register/login)
-- [ ] Build React frontend (Vite + TS)
-- [ ] Implement auth flow on frontend
-- [ ] Jobs CRUD (frontend + backend integration)
-- [ ] Resume uploads
-- [ ] Recruiter dashboard
-- [ ] Admin role & dashboard
-- [ ] CI/CD with GitHub Actions
-- [ ] Deploy backend (Azure) + frontend (Netlify/Vercel)
+- [x] Add Identity & JWT authentication
+- [x] Implement AuthController (register/login)
+- [x] Build React frontend (Vite + TS)
+- [x] Implement auth flow on frontend
+- [x] Jobs CRUD (frontend + backend integration)
+- [x] Resume uploads
+- [x] Recruiter dashboard
+- [x] Admin role & dashboard
+- [x] CI/CD with GitHub Actions
+- [x] Deploy backend (Azure) + frontend (Netlify/Vercel)
 
 ---
 
